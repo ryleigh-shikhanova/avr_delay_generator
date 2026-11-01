@@ -41,9 +41,15 @@ pub fn delay_to_cycles(config: &DelayConfig) -> Result<u64, std::num::TryFromInt
 /// - BRNE: 2 cycles when taken, 1 when not taken
 ///
 /// C(n) = 1 + n + 2(n - 1) + 1 = 3n
-pub fn loop8_cycles(iterations: u16) -> u64 {
-    let cycles = u64::from(iterations) * 3;
-    cycles
+pub fn loop8_cycles(iterations: u16) -> Result<u64, DelayError> {
+    if !(1..=256).contains(&iterations) {
+        return Err(DelayError::InvalidIterations {
+            requested: u32::from(iterations),
+            maximum: 256,
+        });
+    }
+
+    Ok(u64::from(iterations) * 3)
 }
 
 /// Calculates the total cycles consumed by an 16-bit AVR delay loop.
@@ -78,9 +84,9 @@ mod tests {
 
     #[test]
     fn test_loop8_cycles() {
-    assert_eq!(loop8_cycles(1), 3);
-    assert_eq!(loop8_cycles(100), 300);
-    assert_eq!(loop8_cycles(256), 768);
+    assert_eq!(loop8_cycles(1).unwrap(), 3);
+    assert_eq!(loop8_cycles(100).unwrap(), 300);
+    assert_eq!(loop8_cycles(256).unwrap(), 768);
     }
 
     #[test]

@@ -1,6 +1,8 @@
 pub mod error;
 pub mod instruction;
 pub mod timing;
+pub mod planner;
+pub mod generator;
 
 pub enum RoundingMode {
     Up,
