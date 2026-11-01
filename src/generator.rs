@@ -4,9 +4,9 @@ use std::fmt::Write;
 const INDENT: &str = "    ";
 
 fn generate_preamble(assembly: &mut String) {
-    writeln!(assembly, "{INDENT}push r18").unwrap();    
-    writeln!(assembly, "{INDENT}in r18, 0x3F").unwrap();    
-    writeln!(assembly, "{INDENT}push r18\n").unwrap();    
+    writeln!(assembly, "{INDENT}push r18").unwrap();
+    writeln!(assembly, "{INDENT}in r18, 0x3F").unwrap();
+    writeln!(assembly, "{INDENT}push r18\n").unwrap();
 }
 
 fn generate_postamble(assembly: &mut String) {
@@ -28,7 +28,7 @@ pub fn generate_assembly(plan: &DelayPlan) -> Result<String, DelayError> {
 
         LoopStrategy::Bit8 => {
             let initial_value = plan.iterations % 256;
-  
+
             writeln!(assembly, "{INDENT}ldi r18, {initial_value}").unwrap();
             writeln!(assembly, "DELAY_LOOP:").unwrap();
             writeln!(assembly, "{INDENT}dec r18").unwrap();
@@ -53,7 +53,7 @@ pub fn generate_assembly(plan: &DelayPlan) -> Result<String, DelayError> {
     }
 
     if matches!(plan.mode, GenerationMode::Subroutine) {
-        writeln!(assembly, "{INDENT}ret").unwrap();     //ret consumes 4 cycles
+        writeln!(assembly, "{INDENT}ret").unwrap(); //ret consumes 4 cycles
     }
 
     Ok(assembly)
@@ -65,9 +65,9 @@ mod tests {
 
     #[test]
     fn test_padding_only_generation() {
-        let plan = plan_delay(5, GenerationMode::Inline).unwrap();        
+        let plan = plan_delay(5, GenerationMode::Inline).unwrap();
         let assembly = generate_assembly(&plan).unwrap();
 
         assert_eq!(assembly, "nop\n".repeat(5));
-}
+    }
 }

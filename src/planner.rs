@@ -3,7 +3,7 @@ use crate::error::DelayError;
 use crate::timing::{loop8_cycles, loop16_cycles};
 
 const BIT_8_OVERHEAD_CYCLES: u64 = 10;
-const BIT_16_OVERHEAD_CYCLES: u64 = 15;
+const BIT_16_OVERHEAD_CYCLES: u64 = 14;
 
 #[derive(Debug)]
 pub enum LoopStrategy {
@@ -57,8 +57,18 @@ pub fn plan_delay(target_cycles: u64, mode: GenerationMode) -> Result<DelayPlan,
     };
 
     let number_of_iterations = match &strategy {
-        LoopStrategy::Bit8 => (available_cycles - BIT_8_OVERHEAD_CYCLES) / 3,
-        LoopStrategy::Bit16 => (available_cycles - BIT_16_OVERHEAD_CYCLES - 1) / 4,
+        LoopStrategy::Bit8 => {
+            let cycles = available_cycles
+                .checked_sub(BIT_8_OVERHEAD_CYCLES)
+                .ok_or(DelayError::UnachievableDelay)?;
+            cycles / 3
+        }
+        LoopStrategy::Bit16 => {
+            let cycles = available_cycles
+                .checked_sub(BIT_16_OVERHEAD_CYCLES + 1)
+                .ok_or(DelayError::UnachievableDelay)?;
+            cycles / 4
+        }
         LoopStrategy::PaddingOnly => 0,
         LoopStrategy::Nested { .. } => {
             return Err(DelayError::UnachievableDelay);
