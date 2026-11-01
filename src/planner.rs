@@ -10,10 +10,7 @@ pub enum LoopStrategy {
     Bit8,
     Bit16,
     PaddingOnly,
-    Nested {
-        outer: Box<LoopStrategy>,
-        inner: Box<LoopStrategy>,
-    },
+    Nested16,
 }
 
 #[derive(Debug)]
@@ -41,19 +38,14 @@ pub fn plan_delay(target_cycles: u64, mode: GenerationMode) -> Result<DelayPlan,
     } else if available_cycles <= 262_161 {
         LoopStrategy::Bit16
     } else {
-        LoopStrategy::Nested {
-            outer: Box::new(LoopStrategy::Bit16),
-            inner: Box::new(LoopStrategy::Bit16),
-        }
+        LoopStrategy::Nested16
     };
 
     let overhead_cycles = match &strategy {
         LoopStrategy::Bit8 => BIT_8_OVERHEAD_CYCLES,
         LoopStrategy::Bit16 => BIT_16_OVERHEAD_CYCLES,
         LoopStrategy::PaddingOnly => 0,
-        LoopStrategy::Nested { .. } => {
-            return Err(DelayError::UnachievableDelay);
-        }
+        LoopStrategy::Nested16 => 0,
     };
 
     let number_of_iterations = match &strategy {
@@ -70,9 +62,7 @@ pub fn plan_delay(target_cycles: u64, mode: GenerationMode) -> Result<DelayPlan,
             cycles / 4
         }
         LoopStrategy::PaddingOnly => 0,
-        LoopStrategy::Nested { .. } => {
-            return Err(DelayError::UnachievableDelay);
-        }
+        LoopStrategy::Nested16 => 0,
     };
 
     let loop_cycles = match &strategy {
@@ -90,9 +80,7 @@ pub fn plan_delay(target_cycles: u64, mode: GenerationMode) -> Result<DelayPlan,
 
         LoopStrategy::PaddingOnly => 0,
 
-        LoopStrategy::Nested { .. } => {
-            return Err(DelayError::UnachievableDelay);
-        }
+        LoopStrategy::Nested16 => 0,
     };
 
     let remaining_cycles = available_cycles
@@ -175,11 +163,6 @@ mod tests {
         assert!(matches!(plan.strategy, LoopStrategy::Bit16));
         assert_eq!(plan.iterations, 65_536);
         assert_eq!(plan.remaining_cycles, 2);
-    }
-
-    #[test]
-    fn test_nested_not_implemented() {
-        assert!(plan_delay(300_000, GenerationMode::Inline).is_err());
     }
 
     #[test]
@@ -272,7 +255,7 @@ mod tests {
                 LoopStrategy::Bit16 => loop16_cycles(plan.iterations).unwrap(),
 
                 LoopStrategy::PaddingOnly => 0,
-                LoopStrategy::Nested { .. } => unreachable!(),
+                LoopStrategy::Nested16 => 0,
             };
 
             let return_cycles = match mode {

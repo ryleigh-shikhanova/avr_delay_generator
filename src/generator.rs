@@ -17,7 +17,7 @@ fn generate_preamble(assembly: &mut String, strategy: &LoopStrategy) {
             writeln!(assembly, "{INDENT}in r24, 0x3F").unwrap();
             writeln!(assembly, "{INDENT}push r24\n").unwrap();
         }
-        LoopStrategy::Nested { .. } => {}
+        LoopStrategy::Nested16 => {}
     }
 }
 
@@ -35,7 +35,7 @@ fn generate_postamble(assembly: &mut String, strategy: &LoopStrategy) {
             writeln!(assembly, "{INDENT}pop r25").unwrap();
             writeln!(assembly, "{INDENT}pop r24").unwrap();
         }
-        LoopStrategy::Nested { .. } => {}
+        LoopStrategy::Nested16 => {}
     }
 }
 
@@ -73,7 +73,7 @@ pub fn generate_assembly(plan: &DelayPlan) -> Result<String, DelayError> {
             writeln!(assembly, "{INDENT}brne AGAIN\n").unwrap();
         }
 
-        LoopStrategy::Nested { .. } => {
+        LoopStrategy::Nested16 => {
             return Err(DelayError::UnachievableDelay);
         }
     }
