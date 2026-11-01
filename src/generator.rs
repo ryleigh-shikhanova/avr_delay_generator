@@ -1,4 +1,4 @@
-use crate::{error::DelayError, planner::*};
+use crate::{GenerationMode, error::DelayError, planner::*};
 use std::fmt::Write;
 
 const INDENT: &str = "    ";
@@ -17,15 +17,15 @@ fn generate_postamble(assembly: &mut String) {
 
 pub fn generate_assembly(plan: &DelayPlan) -> Result<String, DelayError> {
     let mut assembly = String::new();
-    let preserve_registers = !matches!(plan.strategy, LoopStrategy::PaddingOnly);
+    let preserve_registers = !matches!(&plan.strategy, LoopStrategy::PaddingOnly);
 
     if preserve_registers {
         generate_preamble(&mut assembly);
     }
 
-    match plan.strategy {
+    match &plan.strategy {
         LoopStrategy::PaddingOnly => {}
-        
+
         LoopStrategy::Bit8 => {
             let initial_value = plan.iterations % 256;
   
@@ -39,7 +39,7 @@ pub fn generate_assembly(plan: &DelayPlan) -> Result<String, DelayError> {
             return Err(DelayError::UnachievableDelay);
         }
 
-        LoopStrategy::Nested => {
+        LoopStrategy::Nested { .. } => {
             return Err(DelayError::UnachievableDelay);
         }
     }
@@ -52,6 +52,10 @@ pub fn generate_assembly(plan: &DelayPlan) -> Result<String, DelayError> {
         generate_postamble(&mut assembly);
     }
 
+    if matches!(plan.mode, GenerationMode::Subroutine) {
+        writeln!(assembly, "{INDENT}ret").unwrap();     //ret consumes 4 cycles
+    }
+
     Ok(assembly)
 }
 
@@ -61,7 +65,7 @@ mod tests {
 
     #[test]
     fn test_padding_only_generation() {
-        let plan = plan_delay(5).unwrap();
+        let plan = plan_delay(5, GenerationMode::Inline).unwrap();        
         let assembly = generate_assembly(&plan).unwrap();
 
         assert_eq!(assembly, "nop\n".repeat(5));

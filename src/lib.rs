@@ -1,8 +1,14 @@
 pub mod error;
-pub mod instruction;
-pub mod timing;
-pub mod planner;
 pub mod generator;
+pub mod instruction;
+pub mod planner;
+pub mod timing;
+
+#[derive(Debug, Clone, Copy)]
+pub enum GenerationMode {
+    Inline,
+    Subroutine,
+}
 
 pub enum RoundingMode {
     Up,
@@ -14,4 +20,3 @@ pub struct DelayConfig {
     pub delay_ns: u64,
     pub rounding_mode: RoundingMode,
 }
-

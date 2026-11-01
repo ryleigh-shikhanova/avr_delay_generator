@@ -1,17 +1,17 @@
-use crate::{DelayConfig, RoundingMode};
 use crate::error::DelayError;
+use crate::{DelayConfig, RoundingMode};
 
 /// Converts a requested delay into required num of CPU cycles
 ///
 /// Uses the CPU clock frequency in Hz and requested delay in ns
-/// 
+///
 /// Formula:
 /// - C = (clock_hz * delay_ns) / 1_000_000_000
 /// - Up: rounds toward positive infinity (ceiling)
 /// - Nearest: rounds to the closest integer (ties round up)
-/// 
+///
 ///  Uses u128 arithemtic to prevent overflow during multiplication
-/// 
+///
 /// Returns:
 /// - Ok(cycles): The calculated num of CPU cycles
 /// - Err(error): The result exceeds max value of u64
@@ -58,7 +58,7 @@ pub fn loop8_cycles(iterations: u16) -> Result<u64, DelayError> {
 /// - ldi register, lo8(n)
 /// - ldi register+1, hi8(n)
 /// - Followed by SBIW and BRNE
-/// 
+///
 /// Valid for iteration counts from 1 to 65,536.
 ///
 /// Timing:
@@ -74,9 +74,9 @@ pub fn loop16_cycles(iterations: u32) -> Result<u64, DelayError> {
             maximum: 65_536,
         });
     }
-    
+
     Ok(u64::from(iterations) * 4 + 1)
-} 
+}
 
 #[cfg(test)]
 mod tests {
@@ -84,9 +84,9 @@ mod tests {
 
     #[test]
     fn test_loop8_cycles() {
-    assert_eq!(loop8_cycles(1).unwrap(), 3);
-    assert_eq!(loop8_cycles(100).unwrap(), 300);
-    assert_eq!(loop8_cycles(256).unwrap(), 768);
+        assert_eq!(loop8_cycles(1).unwrap(), 3);
+        assert_eq!(loop8_cycles(100).unwrap(), 300);
+        assert_eq!(loop8_cycles(256).unwrap(), 768);
     }
 
     #[test]
