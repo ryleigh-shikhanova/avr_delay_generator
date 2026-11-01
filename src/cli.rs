@@ -1,7 +1,8 @@
 use crate::usage::handle_usage_args;
+use crate::generate_commands::handle_generate_args;
 use avr_delay_generator::DelayConfig;
 
-pub enum CliCommand {
+pub enum _CliCommand {
     Help,
     _Generate(DelayConfig),
 }
@@ -9,14 +10,16 @@ pub enum CliCommand {
 #[derive(Debug)]
 pub enum CommandError {
     UnknownCommand,
-    _NotEnoughArgs,
-    _TooManyArgs,
+    NotEnoughArgs,
+    TooManyArgs,
+    InvalidArgument,
+    GenerationFailed,
 }
 
 pub fn dispatch_command(command: &str, args: &[String]) -> Result<(), CommandError> {
     match command {
         "h" | "help" => handle_usage_args(args),
-        "g" | "generate" => todo!(),
+        "g" | "generate" => handle_generate_args(args),
         _ => Err(CommandError::UnknownCommand),
     }
 }

@@ -1,2 +1,4 @@
     Checking avr_delay_generator v0.1.0 (/home/ryleigh/Coding/avr_delay_generator)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.19s
+error: could not compile `avr_delay_generator` (bin "avr_delay_generator") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `avr_delay_generator` (bin "avr_delay_generator" test) due to 1 previous error
