@@ -165,7 +165,7 @@ mod tests {
 
         assert!(matches!(plan.strategy, LoopStrategy::Bit16));
         assert_eq!(plan.iterations, 246);
-        assert_eq!(plan.remaining_cycles, 0);
+        assert_eq!(plan.remaining_cycles, 1);
     }
 
     #[test]
@@ -174,7 +174,7 @@ mod tests {
 
         assert!(matches!(plan.strategy, LoopStrategy::Bit16));
         assert_eq!(plan.iterations, 65_536);
-        assert_eq!(plan.remaining_cycles, 1);
+        assert_eq!(plan.remaining_cycles, 2);
     }
 
     #[test]

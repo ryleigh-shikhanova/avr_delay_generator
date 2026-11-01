@@ -3,16 +3,40 @@ use std::fmt::Write;
 
 const INDENT: &str = "    ";
 
-fn generate_preamble(assembly: &mut String) {
-    writeln!(assembly, "{INDENT}push r18").unwrap();
-    writeln!(assembly, "{INDENT}in r18, 0x3F").unwrap();
-    writeln!(assembly, "{INDENT}push r18\n").unwrap();
+fn generate_preamble(assembly: &mut String, strategy: &LoopStrategy) {
+    match strategy {
+        LoopStrategy::PaddingOnly => {}
+        LoopStrategy::Bit8 => {
+            writeln!(assembly, "{INDENT}push r18").unwrap();
+            writeln!(assembly, "{INDENT}in r18, 0x3F").unwrap();
+            writeln!(assembly, "{INDENT}push r18\n").unwrap();
+        }
+        LoopStrategy::Bit16 => {
+            writeln!(assembly, "{INDENT}push r24").unwrap();
+            writeln!(assembly, "{INDENT}push r25").unwrap();
+            writeln!(assembly, "{INDENT}in r24, 0x3F").unwrap();
+            writeln!(assembly, "{INDENT}push r24\n").unwrap();
+        }
+        LoopStrategy::Nested { .. } => {}
+    }
 }
 
-fn generate_postamble(assembly: &mut String) {
-    writeln!(assembly, "{INDENT}pop r18").unwrap();
-    writeln!(assembly, "{INDENT}out 0x3F, r18").unwrap();
-    writeln!(assembly, "{INDENT}pop r18").unwrap();
+fn generate_postamble(assembly: &mut String, strategy: &LoopStrategy) {
+    match strategy {
+        LoopStrategy::PaddingOnly => {}
+        LoopStrategy::Bit8 => {
+            writeln!(assembly, "{INDENT}pop r18").unwrap();
+            writeln!(assembly, "{INDENT}out 0x3F, r18").unwrap();
+            writeln!(assembly, "{INDENT}pop r18").unwrap();
+        }
+        LoopStrategy::Bit16 => {
+            writeln!(assembly, "{INDENT}pop r24").unwrap();
+            writeln!(assembly, "{INDENT}out 0x3F, r24").unwrap();
+            writeln!(assembly, "{INDENT}pop r25").unwrap();
+            writeln!(assembly, "{INDENT}pop r24").unwrap();
+        }
+        LoopStrategy::Nested { .. } => {}
+    }
 }
 
 pub fn generate_assembly(plan: &DelayPlan) -> Result<String, DelayError> {
@@ -20,7 +44,7 @@ pub fn generate_assembly(plan: &DelayPlan) -> Result<String, DelayError> {
     let preserve_registers = !matches!(&plan.strategy, LoopStrategy::PaddingOnly);
 
     if preserve_registers {
-        generate_preamble(&mut assembly);
+        generate_preamble(&mut assembly, &plan.strategy);
     }
 
     match &plan.strategy {
@@ -49,7 +73,7 @@ pub fn generate_assembly(plan: &DelayPlan) -> Result<String, DelayError> {
     }
 
     if preserve_registers {
-        generate_postamble(&mut assembly);
+        generate_postamble(&mut assembly, &plan.strategy);
     }
 
     if matches!(plan.mode, GenerationMode::Subroutine) {
