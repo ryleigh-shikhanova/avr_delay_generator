@@ -1,5 +1,5 @@
-use crate::usage::handle_usage_args;
 use crate::generate_command::handle_generate_args;
+use crate::usage::handle_usage_args;
 use avr_delay_generator::DelayConfig;
 
 pub enum _CliCommand {

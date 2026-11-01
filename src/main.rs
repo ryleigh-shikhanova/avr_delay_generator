@@ -1,8 +1,8 @@
 #![allow(warnings)]
 
 mod cli;
-mod usage;
 mod generate_command;
+mod usage;
 
 use crate::cli::dispatch_command;
 
