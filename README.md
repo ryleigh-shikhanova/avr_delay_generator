@@ -32,25 +32,25 @@ The executable will use the same core calculation and planning code exposed by t
 For clock frequency `f` in hertz and requested time `t` in seconds:
 
 $$
-C_{\mathrm{ideal}} = f\,t
+C_{\text{ideal}} = f\,t
 $$
 
 If the requested time is in nanoseconds:
 
 $$
-C_{\mathrm{ideal}} = \frac{f_{\mathrm{Hz}}\,t_{\mathrm{ns}}}{10^9}
+C_{\text{ideal}} = \frac{f_{\text{Hz}}\,t_{\text{ns}}}{10^9}
 $$
 
 Rounding up:
 
 $$
-C_{\mathrm{target,up}} = \left\lceil\frac{f_{\mathrm{Hz}}\,t_{\mathrm{ns}}}{10^9}\right\rceil
+C_{\text{target,up}} = \left\lceil\frac{f_{\text{Hz}}\,t_{\text{ns}}}{10^9}\right\rceil
 $$
 
 Rounding to the nearest cycle (halfway cases round upward):
 
 $$
-C_{\mathrm{target,nearest}} = \left\lfloor\frac{f_{\mathrm{Hz}}\,t_{\mathrm{ns}}}{10^9}+\frac12\right\rfloor
+C_{\text{target,nearest}} = \left\lfloor\frac{f_{\text{Hz}}\,t_{\text{ns}}}{10^9}+\frac12\right\rfloor
 $$
 
 Use integer arithmetic (`u128` intermediates in Rust) to avoid floating-point precision loss. Check that the final result fits the selected output integer type.
@@ -64,7 +64,7 @@ $$
 One cycle lasts:
 
 $$
-T_{\mathrm{cycle}}=\frac{1}{f_{\mathrm{Hz}}}
+T_{\text{cycle}}=\frac{1}{f_{\text{Hz}}}
 $$
 
 At 16 MHz, that is 62.5 ns.
@@ -148,7 +148,7 @@ Let:
 Then:
 
 $$
-\boxed{C_{\mathrm{nested}}=C_{\mathrm{outer\_init}}+O\bigl(C_{\mathrm{inner}}(I)+C_{\mathrm{outer\_step}}\bigr)+(O-1)C_{\mathrm{outer\_branch\_taken}}+C_{\mathrm{outer\_branch\_final}}}
+\boxed{C_{\text{nested}}=C_{\text{outer init}}+O\bigl(C_{\text{inner}}(I)+C_{\text{outer step}}\bigr)+(O-1)C_{\text{outer branch taken}}+C_{\text{outer branch final}}}
 $$
 
 This is a **template-dependent** formula, not a universal fixed cost: the precise instruction sequence determines each term. Additional padding and state-preservation instructions must be counted separately.
@@ -183,11 +183,11 @@ For very short requested delays, the fixed overhead may exceed the requested dur
 After emitting an instruction sequence, compute its **actual** executed cycle count, not just the requested target:
 
 $$
-T_{\mathrm{actual,ns}}=\frac{C_{\mathrm{actual}}\times10^9}{f_{\mathrm{Hz}}}
+T_{\text{actual,ns}}=\frac{C_{\text{actual}}\times10^9}{f_{\text{Hz}}}
 $$
 
 $$
-\Delta T_{\mathrm{ns}}=T_{\mathrm{actual,ns}}-T_{\mathrm{requested,ns}}
+\Delta T_{\text{ns}}=T_{\text{actual,ns}}-T_{\text{requested,ns}}
 $$
 
 For **up** mode, require `T_actual >= T_requested`. For **nearest** mode, minimize absolute timing error among sequences the generator can actually emit, using a documented tie-breaking rule.
