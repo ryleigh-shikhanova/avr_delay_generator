@@ -134,24 +134,183 @@ For `n = 50000`, total initialization plus loop cost is **200,001 cycles**. A fu
 
 ### 4. Nested counters
 
-When one counter is insufficient, repeat an inner countdown loop using an outer counter. The inner counter must be **reinitialized on each outer iteration**.
+## Nested 16-bit Delay Loop
+
+For delays exceeding the range of a single 16-bit counter, the generator
+uses two nested 16-bit counters.
+
+- Inner counter: `r31:r30`
+- Outer counter: `r29:r28`
+- Temporary SREG register: `r24`
+- Maximum iterations per counter: 65,536
+- Both counters and SREG are preserved.
+
+### Generated AVR Assembly
+
+```asm
+DELAY:
+    ; Preserve registers and SREG
+    push r24
+    in   r24, 0x3F
+    push r24
+
+    push r28
+    push r29
+    push r30
+    push r31
+
+    ; Initialize outer counter
+    ldi r28, lo8(n2)
+    ldi r29, hi8(n2)
+
+OUTER_LOOP:
+    ; Initialize inner counter
+    ldi r30, lo8(n1)
+    ldi r31, hi8(n1)
+
+INNER_LOOP:
+    sbiw r30, 1
+    brne INNER_LOOP
+
+    ; Decrement outer counter
+    sbiw r28, 1
+    brne OUTER_LOOP
+
+    ; Restore registers and SREG
+    pop r31
+    pop r30
+    pop r29
+    pop r28
+
+    pop r24
+    out 0x3F, r24
+    pop r24
+
+    ret
+```
+
+### Instruction Timing
+
+Assumes a classic AVR instruction set.
+
+| Instruction | Cycles |
+|---|---:|
+| LDI | 1 |
+| SBIW | 2 |
+| BRNE (taken) | 2 |
+| BRNE (not taken) | 1 |
+| PUSH | 2 |
+| POP | 2 |
+| IN | 1 |
+| OUT | 1 |
+| RET | 4 |
+| NOP | 1 |
+
+### Cycle Formulas
 
 Let:
 
-- `O` = number of outer iterations.
-- `I` = number of inner iterations.
-- `C_inner(I)` = initialization **plus** body cycles of the inner loop.
-- `C_outer_step` = cycles required to decrement the outer counter.
-- `C_outer_init` = one-time cost to initialize the outer counter.
-- `C_outer_branch_taken` / `C_outer_branch_final` = outer branch costs.
+- `n1` = number of inner loop iterations (1–65,536)
+- `n2` = number of outer loop iterations (1–65,536)
+- `P` = additional padding cycles (NOPs)
 
-Then:
+**Inner loop:**
 
-$$
-\boxed{C_{\text{nested}}=C_{\text{outer init}}+O\bigl(C_{\text{inner}}(I)+C_{\text{outer step}}\bigr)+(O-1)C_{\text{outer branch taken}}+C_{\text{outer branch final}}}
-$$
+Each iteration executes `SBIW` (2 cycles) and `BRNE`
+(2 cycles when taken, 1 when not taken).
 
-This is a **template-dependent** formula, not a universal fixed cost: the precise instruction sequence determines each term. Additional padding and state-preservation instructions must be counted separately.
+\[
+C_{\text{inner}} = 4n_1 - 1
+\]
+
+**Outer loop:**
+
+Each outer iteration executes:
+
+- Two LDIs to initialize the inner counter: 2 cycles
+- The complete inner loop: \(4n_1 - 1\) cycles
+- One SBIW on the outer counter: 2 cycles
+- One BRNE: 2 cycles when taken, 1 on the final iteration
+
+Including the initial outer counter initialization:
+
+\[
+C_{\text{body}} = 4n_1n_2 + 5n_2 + 1
+\]
+
+Equivalently:
+
+\[
+\boxed{C_{\text{body}} = n_2(4n_1 + 5) + 1}
+\]
+
+**Register and SREG preservation:**
+
+The preamble requires 13 cycles, and the postamble
+requires 13 cycles.
+
+\[
+C_{\text{preservation}} = 13 + 13 = 26
+\]
+
+**Total inline delay:**
+
+\[
+\boxed{C_{\text{inline}} = n_2(4n_1 + 5) + 27 + P}
+\]
+
+**Total subroutine delay:**
+
+The RET instruction adds 4 cycles.
+
+\[
+\boxed{C_{\text{subroutine}} = n_2(4n_1 + 5) + 31 + P}
+\]
+
+The subroutine formula excludes the caller's CALL/RCALL instruction.
+
+### Maximum Delay
+
+Both 16-bit counters support up to 65,536 iterations.
+
+\[
+n_1 = n_2 = 65,536
+\]
+
+The maximum subroutine cycle count without additional padding is:
+
+\[
+C_{\max} = 65,536(4 \times 65,536 + 5) + 31
+\]
+
+\[
+\boxed{C_{\max} = 17,180,196,895\text{ cycles}}
+\]
+
+For a CPU operating at frequency \(f\):
+
+\[
+t = \frac{C}{f}
+\]
+
+At 16 MHz:
+
+\[
+t_{\max} \approx 1073.76\text{ seconds}
+\]
+
+Approximately **17 minutes and 54 seconds**.
+
+### Limitations
+
+- CPU execution is blocked for the duration of the delay.
+- Interrupts can extend the actual elapsed time.
+- Timing assumes classic AVR instruction cycle counts.
+- Timing excludes CALL/RCALL overhead.
+- This strategy uses stack space to preserve five register
+  values, including the temporary SREG value.
+- The generator must choose valid iteration counts and account
+  for any additional padding cycles.
 
 ### 5. Register preservation and subroutine overhead
 
