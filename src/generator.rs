@@ -79,7 +79,7 @@ pub fn generate_assembly(plan: &DelayPlan) -> Result<String, DelayError> {
     }
 
     for _ in 0..plan.remaining_cycles {
-        assembly.push_str("nop\n");
+        writeln!(assembly, "{INDENT}nop").unwrap();
     }
 
     if preserve_registers {
