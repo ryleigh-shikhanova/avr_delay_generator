@@ -4,6 +4,7 @@ use crate::timing::{loop8_cycles, loop16_cycles};
 
 const BIT_8_OVERHEAD_CYCLES: u64 = 10;
 const BIT_16_OVERHEAD_CYCLES: u64 = 14;
+const _NESTED16_OVERHEAD_CYCLES: u64 = 0;
 
 #[derive(Debug)]
 pub enum LoopStrategy {
