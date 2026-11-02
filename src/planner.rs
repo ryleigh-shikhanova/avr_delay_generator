@@ -4,7 +4,11 @@ use crate::timing::{loop8_cycles, loop16_cycles};
 
 const BIT_8_OVERHEAD_CYCLES: u64 = 10;
 const BIT_16_OVERHEAD_CYCLES: u64 = 14;
-const _NESTED16_OVERHEAD_CYCLES: u64 = 0;
+
+const _MAX_INNER_CYCLES: u64 = 262_149;
+const NESTED16_PRESERVATION_CYCLES: u64 = 26;
+const NESTED16_FIXED_OVERHEAD_CYCLES: u64 = 27;
+const RET_CYCLES: u64 = 4;
 
 #[derive(Debug)]
 pub enum LoopStrategy {
@@ -23,10 +27,38 @@ pub struct DelayPlan {
     pub overhead_cycles: u64,
 }
 
+struct NestedCandidate {
+    inner_iterations: u32,
+    outer_iterations: u32,
+    remaining_cycles: u64,
+    instruction_count: u64,
+}
+
+impl NestedCandidate {
+    pub fn new(inner: u32, outer: u32, remainder: u64, instructions: u64) -> Self {
+        Self {
+            inner_iterations: inner,
+            outer_iterations: outer,
+            remaining_cycles: remainder,
+            instruction_count: instructions,
+        }
+    }
+
+    pub fn size_bytes(&self) -> u64 {
+        self.instruction_count * 2
+    }
+
+    pub fn is_better_than(&self, other: &NestedCandidate) -> bool {
+        self.instruction_count < other.instruction_count
+        || (self.instruction_count == other.instruction_count
+            && self.remaining_cycles < other.remaining_cycles)
+    } 
+}
+
 pub fn plan_delay(target_cycles: u64, mode: GenerationMode) -> Result<DelayPlan, DelayError> {
     let return_cycles = match mode {
         GenerationMode::Inline => 0,
-        GenerationMode::Subroutine => 4,
+        GenerationMode::Subroutine => RET_CYCLES,
     };
     let available_cycles = target_cycles
         .checked_sub(return_cycles)
@@ -46,7 +78,7 @@ pub fn plan_delay(target_cycles: u64, mode: GenerationMode) -> Result<DelayPlan,
         LoopStrategy::Bit8 => BIT_8_OVERHEAD_CYCLES,
         LoopStrategy::Bit16 => BIT_16_OVERHEAD_CYCLES,
         LoopStrategy::PaddingOnly => 0,
-        LoopStrategy::Nested16 => 0,
+        LoopStrategy::Nested16 => NESTED16_PRESERVATION_CYCLES + NESTED16_FIXED_OVERHEAD_CYCLES,
     };
 
     let number_of_iterations = match &strategy {
