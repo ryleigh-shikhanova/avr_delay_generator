@@ -17,11 +17,8 @@ const RELATIVE_CONVERSION_TO_NS: &[(&str, u64)] = &[
     ("ns", 1),
 ];
 
-const RELATIVE_CONVERSION_TO_HZ: &[(&str, u64)] = &[
-    ("ghz", 1_000_000_000),
-    ("mhz", 1_000_000),
-    ("hz", 1),
-];
+const RELATIVE_CONVERSION_TO_HZ: &[(&str, u64)] =
+    &[("ghz", 1_000_000_000), ("mhz", 1_000_000), ("hz", 1)];
 
 pub fn convert_to_ns(arg: &str) -> Result<u64, CommandError> {
     if arg.bytes().all(|b| b.is_ascii_digit()) {

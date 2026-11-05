@@ -50,9 +50,9 @@ impl NestedCandidate {
 
     pub fn is_better_than(&self, other: &NestedCandidate) -> bool {
         self.instruction_count < other.instruction_count
-        || (self.instruction_count == other.instruction_count
-            && self.remaining_cycles < other.remaining_cycles)
-    } 
+            || (self.instruction_count == other.instruction_count
+                && self.remaining_cycles < other.remaining_cycles)
+    }
 }
 
 pub fn plan_delay(target_cycles: u64, mode: GenerationMode) -> Result<DelayPlan, DelayError> {
